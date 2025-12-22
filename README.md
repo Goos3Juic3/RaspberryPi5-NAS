@@ -35,6 +35,7 @@ and <br/>
 <br/>
 If not the latest version go ahead and update everything with:<br/>
 "sudo apt update && sudo apt upgrade -y"<br/>
+<br/>
 If not installed then install with(these commands one by one):<br/>
 "sudo apt-get install ca-certificates curl gnupg lsb-release -y"<br/>
 "sudo mkdir -p /etc/apt/keyrings"<br/>
@@ -43,72 +44,76 @@ If not installed then install with(these commands one by one):<br/>
 "echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null"<br/>
 "sudo apt-get update"<br/>
 "sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y"<br/>
+<br/>
 Then go ahead and reverify instalation and version.<br/>
+<br/>
 Next step is to create the project folder that'll contain the docker compose yaml file:<br/>
 "mkdir -p ~/nextcloud"<br/>
 "cd ~/nextcloud"<br/>
+<br/>
 Next while in the nextcloud folder we will create the yaml:<br/>
 "nano docker-compose.yml"<br/>
+<br/>
 As of December 2025 this is exactly how your yaml should look:<br/>
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-version: "3.8"
+version: "3.8"<br/>
+<br/>
+services:<br/>
+  db:<br/>
+    image: mariadb:10.11<br/>
+    container_name: nextcloud_db<br/>
+    restart: always<br/>
+    environment:  # using mysql is optional but suggested for a security layer<br/>
+      MYSQL_ROOT_PASSWORD: "password"  # you'll be putting your own password here<br/>
+      MYSQL_DATABASE: "nextcloud"  <br/>
+      MYSQL_USER: "nextcloud"  <br/>
+      MYSQL_PASSWORD: "password"  # you'll be putting your own password here<br/>
+    volumes:<br/>
+      - db_data:/var/lib/mysql<br/>
+    networks:<br/>
+      - web<br/>
+<br/>
+  nextcloud:<br/>
+    image: nextcloud:32-apache<br/>
+    container_name: nextcloud<br/>
+    restart: always<br/>
+    depends_on:<br/>
+      - db<br/>
+    environment:<br/>
+      MYSQL_HOST: db<br/>
+      MYSQL_DATABASE: nextcloud<br/>
+      MYSQL_USER: nextcloud<br/>
+      MYSQL_PASSWORD: password  # you'll be putting your own password here<br/>
+    volumes:<br/>
+      - nextcloud_html:/var/www/html<br/>
+      - /mnt/raid/nextcloud-data:/var/www/html/data<br/>
+    networks:<br/>
+      - web<br/>
 
-services:
-  db:
-    image: mariadb:10.11
-    container_name: nextcloud_db
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: "password"  # you'll be putting your own password here
-      MYSQL_DATABASE: "nextcloud"
-      MYSQL_USER: "nextcloud"  
-      MYSQL_PASSWORD: "password"  # you'll be putting your own password here
-    volumes:
-      - db_data:/var/lib/mysql
-    networks:
-      - web
-
-  nextcloud:
-    image: nextcloud:32-apache
-    container_name: nextcloud
-    restart: always
-    depends_on:
-      - db
-    environment:
-      MYSQL_HOST: db
-      MYSQL_DATABASE: nextcloud
-      MYSQL_USER: nextcloud
-      MYSQL_PASSWORD: password  # you'll be putting your own password here
-    volumes:
-      - nextcloud_html:/var/www/html
-      - /mnt/raid/nextcloud-data:/var/www/html/data
-    networks:
-      - web
-
-  nginx-proxy-manager:
-    image: jc21/nginx-proxy-manager:latest
-    container_name: nginx-proxy-manager
-    restart: always
-    dns:
-      - 1.1.1.1
-      - 9.9.9.9
-    ports:
-      - "80:80"     # internal http entry (Tailscale will hit this)
-      - "81:81"     # NPM admin UI
-      # NOTE: we do NOT need 443 because Tailscale provides HTTPS externally
-    volumes:
-      - npm_data:/data
-    networks:
-      - web
-
-volumes:
-  db_data:
-  nextcloud_data:
-  npm_data:
-
-networks:
-  web:
-    driver: bridge
+  nginx-proxy-manager:<br/>
+    image: jc21/nginx-proxy-manager:latest<br/>
+    container_name: nginx-proxy-manager<br/>
+    restart: always<br/>
+    dns:<br/>
+      - 1.1.1.1<br/>
+      - 9.9.9.9<br/>
+    ports:<br/>
+      - "80:80"     # internal http entry (Tailscale will hit this)<br/>
+      - "81:81"     # NPM admin UI<br/>
+      # NOTE: we do NOT need 443 because Tailscale provides HTTPS externally<br/>
+    volumes:<br/>
+      - npm_data:/data<br/>
+    networks:<br/>
+      - web<br/>
+<br/>
+volumes:<br/>
+  db_data:<br/>
+  nextcloud_data:<br/>
+  npm_data:<br/>
+<br/>
+networks:<br/>
+  web:<br/>
+    driver: bridge<br/>
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Now start the containers:<br/>
 "docker compose up -d"<br/>
