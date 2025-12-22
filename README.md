@@ -22,102 +22,148 @@ Nextcloud (Docker)<br/>
         │<br/>
         ▼<br/>
 MariaDB (Docker)<br/>
-<br/>
-This setup bypasses CGNAT by using Tailscale to provide private, encrypted HTTPS access. Tailscale terminates TLS at the network edge and forwards traffic over HTTP to Nginx Proxy Manager, which then reverse-proxies requests to Nextcloud internally. No public ports or public DNS are required.<br/>
+
+
+This setup bypasses CGNAT by using Tailscale to provide private, encrypted HTTPS access. Tailscale terminates TLS at the network edge and forwards traffic over HTTP to Nginx Proxy Manager, which then reverse-proxies requests to Nextcloud internally. No public ports or public DNS are required.
+
+
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Step-by-step:
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Docker:<br/>
-Check to make sure latest docker and docker compose versions are installed with<br/>
-"docker --version"<br/>
-and <br/>
-"docker compose version"<br/>
-<br/>
-If not the latest version go ahead and update everything with:<br/>
-"sudo apt update && sudo apt upgrade -y"<br/>
-<br/>
-If not installed then install with(these commands one by one):<br/>
-"sudo apt-get install ca-certificates curl gnupg lsb-release -y"<br/>
-"sudo mkdir -p /etc/apt/keyrings"<br/>
-"curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg"<br/>
-"sudo chmod a+r /etc/apt/keyrings/docker.gpg"<br/>
-"echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null"<br/>
-"sudo apt-get update"<br/>
-"sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y"<br/>
-<br/>
-Then go ahead and reverify instalation and version.<br/>
-<br/>
-Next step is to create the project folder that'll contain the docker compose yaml file:<br/>
-"mkdir -p ~/nextcloud"<br/>
-"cd ~/nextcloud"<br/>
-<br/>
-Next while in the nextcloud folder we will create the yaml:<br/>
-"nano docker-compose.yml"<br/>
-<br/>
-As of December 2025 this is exactly how your yaml should look:<br/>
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-version: "3.8"<br/>
-<br/>
-services:<br/>
-  db:<br/>
-    image: mariadb:10.11<br/>
-    container_name: nextcloud_db<br/>
-    restart: always<br/>
-    environment:  # using mysql is optional but suggested for a security layer<br/>
-      MYSQL_ROOT_PASSWORD: "password"  # you'll be putting your own password here<br/>
-      MYSQL_DATABASE: "nextcloud"  <br/>
-      MYSQL_USER: "nextcloud"  <br/>
-      MYSQL_PASSWORD: "password"  # you'll be putting your own password here<br/>
-    volumes:<br/>
-      - db_data:/var/lib/mysql<br/>
-    networks:<br/>
-      - web<br/>
-<br/>
-  nextcloud:<br/>
-    image: nextcloud:32-apache<br/>
-    container_name: nextcloud<br/>
-    restart: always<br/>
-    depends_on:<br/>
-      - db<br/>
-    environment:<br/>
-      MYSQL_HOST: db<br/>
-      MYSQL_DATABASE: nextcloud<br/>
-      MYSQL_USER: nextcloud<br/>
-      MYSQL_PASSWORD: password  # you'll be putting your own password here<br/>
-    volumes:<br/>
-      - nextcloud_html:/var/www/html<br/>
-      - /mnt/raid/nextcloud-data:/var/www/html/data<br/>
-    networks:<br/>
-      - web<br/>
 
-  nginx-proxy-manager:<br/>
-    image: jc21/nginx-proxy-manager:latest<br/>
-    container_name: nginx-proxy-manager<br/>
-    restart: always<br/>
-    dns:<br/>
-      - 1.1.1.1<br/>
-      - 9.9.9.9<br/>
-    ports:<br/>
-      - "80:80"     # internal http entry (Tailscale will hit this)<br/>
-      - "81:81"     # NPM admin UI<br/>
-      # NOTE: we do NOT need 443 because Tailscale provides HTTPS externally<br/>
-    volumes:<br/>
-      - npm_data:/data<br/>
-    networks:<br/>
-      - web<br/>
-<br/>
-volumes:<br/>
-  db_data:<br/>
-  nextcloud_data:<br/>
-  npm_data:<br/>
-<br/>
-networks:<br/>
-  web:<br/>
-    driver: bridge<br/>
+Docker:
+
+Check to make sure latest docker and docker compose versions are installed with:<br/>
+```bash
+docker --version
+```
+and 
+
+```bash
+docker compose version
+```
+
+
+If not the latest version go ahead and update everything with:
+
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+If not installed then install with(these commands one by one):
+
+```bash
+sudo apt-get install ca-certificates curl gnupg lsb-release -y
+```
+```bash
+sudo mkdir -p /etc/apt/keyrings
+```
+```bash
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+```
+```bash
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+```
+```bash
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+```
+```bash
+sudo apt-get update
+```
+```bash
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
+```
+
+Then go ahead and reverify instalation and version.
+
+
+Next step is to create the project folder that'll contain the docker compose yaml file:
+
+```bash
+mkdir -p ~/nextcloud
+```
+```bash
+cd ~/nextcloud
+```
+
+Next while in the nextcloud folder we will create the yaml:
+
+```bash
+nano docker-compose.yml
+```
+
+As of December 2025 this is exactly how your yaml should look:
+
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Now start the containers:<br/>
-"docker compose up -d"<br/>
-"docker ps"<br/>
+
+```yaml
+version: "3.8"
+
+services:
+  db:
+    image: mariadb:10.11
+    container_name: nextcloud_db
+    restart: always
+    environment:  # using mysql is optional but suggested for a security layer
+      MYSQL_ROOT_PASSWORD: "password"  # you'll be putting your own password here
+      MYSQL_DATABASE: "nextcloud"  
+      MYSQL_USER: "nextcloud"  
+      MYSQL_PASSWORD: "password"  # you'll be putting your own password here
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - web
+
+  nextcloud:
+    image: nextcloud:32-apache
+    container_name: nextcloud
+    restart: always
+    depends_on:
+      - db
+    environment:
+      MYSQL_HOST: db
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: password  # you'll be putting your own password here
+    volumes:
+      - nextcloud_html:/var/www/html
+      - /mnt/raid/nextcloud-data:/var/www/html/data
+    networks:
+      - web
+
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    restart: always
+    dns:
+      - 1.1.1.1
+      - 9.9.9.9
+    ports:
+      - "80:80"     # internal http entry (Tailscale will hit this)
+      - "81:81"     # NPM admin UI
+      # NOTE: we do NOT need 443 because Tailscale provides HTTPS externally
+    volumes:
+      - npm_data:/data
+    networks:
+      - web
+
+volumes:
+  db_data:
+  nextcloud_data:
+  npm_data:
+
+networks:
+  web:
+    driver: bridge
+```
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Now start the containers:
+```bash
+docker compose up -d
+```
+```bash
+docker ps
+```
 You should see nextcloud_db, nextcloud, and nginx-proxy-manager<br/>
 That's all to do with docker for now!<br/>
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
