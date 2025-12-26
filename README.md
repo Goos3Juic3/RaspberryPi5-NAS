@@ -167,3 +167,68 @@ docker ps
 You should see nextcloud_db, nextcloud, and nginx-proxy-manager<br/>
 That's all to do with docker for now!<br/>
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Open from a machine on you LAN the NPM admin UI: 
+```bash
+http://<PI_LAN_IP>:81 
+```
+Note: just use the IP for your PI in PI_LAN_IP which you can find with
+```bash
+ifconfig
+```
+OR
+```bash
+sudo ifconfig
+```
+If you haven't created an NPM account yet just start out with the default which is:
+
+Email: admin@example.com
+
+Password: changeme
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Next is to configure NPM to route to Nextcloud (internally)
+
+In NPM go to: Host --> Proxy Hosts --> Add Proxy Host
+
+Now for the details:
+
+Domain Name: in the next step we'll replace this with your Tailscale hostname but for now just put something like: 
+```bash
+nextcloud.local
+```
+Scheme: we're using http because Tailscale is going to be handling the http to https conversion so just do:
+```bash
+http
+```
+Forward Hostname/IP:
+```bash
+nextcloud
+```
+Forward Port:
+```bash
+80
+```
+Enable: Websockets Support and Block Common Exploits (leave SSL off)
+
+Finally just press save then wait a couple seconds and you should see NPM proxy is online
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Time to install Tailscale if you haven't already
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+```
+then run
+```bash
+sudo tailscale up
+```
+You should now see a login link printed. Search it then sign in/sign up
+
+After finished check to confirm it's running with:
+```bash
+tailscale status
+```
+Your PI should show as connected
+
+Now enable MagicDNS in Tailscale by going to: Admin Consloe --> DNS --> MagicDNS
+
+<img width="310" height="163" alt="image" src="https://github.com/user-attachments/assets/c63120f2-d3b5-43d7-9d0b-1e8741757dfa" />
