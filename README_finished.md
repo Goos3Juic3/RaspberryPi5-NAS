@@ -768,9 +768,6 @@ Possible upgrades for this project:
 - Add a UPS for safer shutdowns during power loss
 - Use Docker `.env` files or Docker secrets instead of hardcoded passwords
 - Add firewall rules to restrict access to Nginx Proxy Manager admin port
-- Add screenshots of the final Nextcloud dashboard
-- Add benchmark results for read/write speeds
-- Document the RAID creation process in more detail
 
 ---
 
