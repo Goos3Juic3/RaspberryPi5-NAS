@@ -477,9 +477,6 @@ In the Tailscale admin console:
 DNS -> MagicDNS -> Enable
 ```
 
-Example screenshot:
-
-<img width="310" height="163" alt="image" src="https://github.com/user-attachments/assets/c63120f2-d3b5-43d7-9d0b-1e8741757dfa" />
 
 ### Enable HTTPS Certificates
 
